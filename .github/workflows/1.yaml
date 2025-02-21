@@ -1,7 +1,4 @@
-name: Matrix with Checkbox Inputs
-
-run-name: >
-  Deploy AAA to BBBB
+name: Deploy AAA to BBBB
 
 on:
   workflow_dispatch:
@@ -31,6 +28,7 @@ jobs:
         uses: actions/checkout@v2
       
       - name: Print Parameter Name and Status
+        id: print_parameter_status
         run: |
           PARAM_NAME=${{ matrix.param_name }}
           ENABLED=false
@@ -42,8 +40,9 @@ jobs:
             ENABLED=true
           fi
           echo "Parameter: $PARAM_NAME, Enabled: $ENABLED"
+          echo "::set-output name=ENABLED::$ENABLED"
       
       - name: Deploy
-        if: steps.Print Parameter Name and Status.outputs.ENABLED == 'true'
+        if: steps.print_parameter_status.outputs.ENABLED == 'true'
         run: |
           echo "Deploying with ${{ matrix.param_name }}"
