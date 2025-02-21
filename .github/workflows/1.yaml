@@ -27,7 +27,6 @@ jobs:
       matrix:
         default_tenant: [ 'AAA', 'BBB', 'CCC' ]  # List of supported workspaces
     name: Deploy ${{ inputs.enable_param1 }} to ${{ matrix.default_tenant }}
-    if: matrix.enabled == 'true'
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
