@@ -1,0 +1,178 @@
+name: Deploy workspace
+
+run-name: >
+  Deploy ${{ inputs.package }} to ${{ inputs.environment }}
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        type: string
+      report-list:
+        description: 'Report list'
+        type: string
+        required: true
+      package:
+        description: 'Package tag in the remote registry'
+        required: true
+        type: string
+
+env:
+  USER_ACCOUNT: ${{ vars.SERVICE_ACCOUNT_USER }}
+  USER_ACCOUNT_PWD: ${{ secrets.SERVICE_ACCOUNT_PWD }}
+  APP_NAME: "PowerBI"
+  SECRETS_TENANT: ${{ vars.SECRETS_TENANT == 'TR' && secrets.TR_SECRETS || secrets.SP_SECRETS }}
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    environment: ${{ inputs.environment }}
+    permissions:
+        actions: read
+        checks: write
+        contents: read
+        packages: read    
+    steps:
+      - name: User account
+        run: |
+          echo "USER_ACCOUNT: ${{ env.USER_ACCOUNT }}"
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: github
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify image exists
+        id: verify-image
+        uses: scalepoint/actions/verify-image-exists@v1
+        with:
+          image_fullname: ghcr.io/${{ github.repository }}:${{ inputs.package }}
+          show_notification: 'true'
+      - name: Evaluate verify-image output
+        if: steps.verify-image.outputs.exists == 'false'
+        run: |
+          echo "::error ${{ github.repository }}:${{ inputs.package }} not found"
+          exit 1
+      - name: Install packages
+        run: |
+          sudo apt install ca-certificates gnupg
+          sudo gpg --homedir /tmp --no-default-keyring --keyring /usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+          echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] https://download.mono-project.com/repo/ubuntu stable-focal main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
+          sudo apt-get update -y
+          sudo apt-get install -y -f apt-transport-https software-properties-common gss-ntlmssp wget netcat smbclient
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.0/powershell_7.4.0-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.4.0-1.deb_amd64.deb
+          sudo pwsh -Command 'Register-PSRepository -Default; Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted; Install-Module -Name PSWSMan; Install-WSMan'
+          #sudo nuget update -self
+      - name: Test connection with deploy server
+        run: |
+          echo "::group::Check WinRM port"
+          nc -z -v  ${{ vars.HOST }} 5985
+          echo "::endgroup::"
+          echo "::group::Check SMB port"
+          nc -z -v  ${{ vars.HOST }} 445
+          echo "::endgroup::"
+      - name: Setup ORAS
+        uses: oras-project/setup-oras@v1
+      - name: Pull binaries
+        run: |
+          oras pull ghcr.io/${{ github.repository }}:${{ inputs.package }}
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 3.1.x
+        env:
+          DOTNET_NOLOGO: "1"
+          DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+          DOTNET_INSTALL_DIR: $RUNNER_TEMP/.dotnet
+      - name: Parse report list
+        shell: pwsh
+        run: |
+          $reports = @{
+            'scalepoint-repair-journey' = 'Scalepoint Repair Journey'
+            'benchmark-master' = 'Benchmark - Master'
+            'master-selskaber' = 'Master - Selskaber'
+            'claimshop-standard' = 'ClaimShop Standard'
+            'claimshop-benchmarks' = 'ClaimShop Benchmarks'
+            'hub-property-standard' = 'Hub Property Standard'
+            'hub-property-benchmarks' = 'Hub Property Benchmarks'
+          }
+
+          $reportsJSON = '${{ inputs.report-list }}' | ConvertFrom-Json | Select-Object * -ExcludeProperty environment, package
+
+          $list = [string]::Empty
+          foreach ($report in $reportsJSON.PSObject.Properties) {
+            if ($report.Value)
+            {
+              $list += "$($reports[$report.Name]);"
+            }
+          }
+
+          Write-Host "Reports to be deployed: $($list)"
+          Write-Output "REPORT_LIST=$($list)" >> $Env:GITHUB_ENV
+      - name: Evaluate report list
+        if: env.REPORT_LIST == ''
+        run: |
+          echo "report list to deploy is empty"
+          exit 1
+      - name: Deploy binaries
+        shell: pwsh
+        run: |
+          echo "::group::Setup credentials"
+          $PSCredentials = New-Object System.Management.Automation.PSCredential ('${{ env.USER_ACCOUNT }}', (ConvertTo-SecureString '${{ env.USER_ACCOUNT_PWD }}' -AsPlainText -Force))
+          echo "::endgroup::"
+          echo "::group::Connect to deployment server"
+          echo "Connect to ${{ vars.HOST }}"
+          $Session = New-PSSession -ComputerName '${{ vars.HOST }}' -Authentication Negotiate -Credential $PSCredentials
+          echo "::endgroup::"
+          echo "::group::Create network share"
+          Invoke-Command -Session $Session -ScriptBlock {
+            echo "List drives"
+            if (-not (Test-Path '${{ vars.BINARIES_PATH }}' -PathType Container)) {
+              New-Item '${{ vars.BINARIES_PATH }}' -ItemType Directory -Verbose
+            }
+            $ShareList = Get-SmbShare | Select -ExpandProperty Name
+            if (-not $ShareList.contains('${{ vars.NETWORK_SHARE }}')) {
+              echo "Create share ${{ vars.NETWORK_SHARE }}"
+              New-SmbShare -Name ${{ vars.NETWORK_SHARE }} -Path '${{ vars.BINARIES_PATH }}' -FullAccess '${{ env.USER_ACCOUNT }}' -ChangeAccess 'Administrators' -ReadAccess 'Everyone' -Description 'Binaries temp'
+            }
+            echo "Get share ACL ${{ vars.NETWORK_SHARE }}"
+            Get-SmbShareAccess -Name ${{ vars.NETWORK_SHARE }} 
+          }
+          echo "::endgroup::"
+          echo "::group::Copy binaries"
+          smbclient //${{ vars.HOST }}/${{ vars.NETWORK_SHARE }} -d 1 -p 445 -U '${{ env.USER_ACCOUNT }}%${{ env.USER_ACCOUNT_PWD }}' -c "mkdir /${{ env.APP_NAME }}/"
+          smbclient //${{ vars.HOST }}/${{ vars.NETWORK_SHARE }} -d 1 -D ${{ env.APP_NAME }} -p 445 -U '${{ env.USER_ACCOUNT }}%${{ env.USER_ACCOUNT_PWD }}' -c 'put "build.zip"'
+          echo "::endgroup::"
+          echo "::group::Run deployment script"
+          Invoke-Command -Session $Session -ScriptBlock {
+            
+            $AppPath = Join-Path '${{ vars.BINARIES_PATH }}' '${{ env.APP_NAME }}'
+            $ReleasePath = Join-Path $AppPath '${{ inputs.package }}'
+            $RuntimeConfigurationPath = Join-Path $ReleasePath 'RuntimeConfiguration'
+            
+            Set-Location $AppPath
+            Expand-Archive -Path "build.zip" -DestinationPath $ReleasePath -Force
+            Pop-Location
+
+            $SecretsJSON = '${{ env.SECRETS_TENANT }}' | ConvertFrom-Json
+            
+            Write-Host "Reports to be deployed: ${{ env.REPORT_LIST }}"
+
+            Set-Location $ReleasePath
+              & ".\DeployScripts\Deploy.ps1" `
+                -tenantConfiguration "${{ vars.TENANT_NAME }}" `
+                -configPath "Prod" `
+                -secrets $SecretsJSON `
+                -reportSetString "${{ env.REPORT_LIST }}"
+
+            Pop-Location
+          }
+          echo "::endgroup::"
+          $Session | Remove-PSSession
+      - name: Cleanup binaries
+        shell: pwsh
+        run: |
+          smbclient //${{ vars.HOST }}/${{ vars.NETWORK_SHARE }} -d 1 -p 445 -U '${{ env.USER_ACCOUNT }}%${{ env.USER_ACCOUNT_PWD }}' -c "deltree /${{ env.APP_NAME }}/"
