@@ -27,29 +27,11 @@ jobs:
       - name: Set Matrix
         id: set-matrix
         run: |
-          MATRIX="{\"include\":["
-          FIRST=true
-          if [ "${{ github.event.inputs.enable_param1 }}" == "true" ]; then
-            if [ "$FIRST" == "false" ]; then
-              MATRIX+=","
-            fi
-            MATRIX+="{\"param_name\":\"param1\"}"
-            FIRST=false
-          fi
-          if [ "${{ github.event.inputs.enable_param2 }}" == "true" ]; then
-            if [ "$FIRST" == "false" ]; then
-              MATRIX+=","
-            fi
-            MATRIX+="{\"param_name\":\"param2\"}"
-            FIRST=false
-          fi
-          if [ "${{ github.event.inputs.enable_param3 }}" == "true" ]; then
-            if [ "$FIRST" == "false" ]; then
-              MATRIX+=","
-            fi
-            MATRIX+="{\"param_name\":\"param3\"}"
-          fi
-          MATRIX+="]}"
+          MATRIX=$(jq -cn '{include: []}' | jq '.include += [
+            {"param_name": "param1"} | select("${{ github.event.inputs.enable_param1 }}" == "true"),
+            {"param_name": "param2"} | select("${{ github.event.inputs.enable_param2 }}" == "true"),
+            {"param_name": "param3"} | select("${{ github.event.inputs.enable_param3 }}" == "true")
+          ]')
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
   deploy:
