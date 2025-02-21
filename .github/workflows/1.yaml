@@ -21,22 +21,34 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-     steps:
+    steps:
+      - name: Print input
+        run: echo "Environment is ${{ inputs.enable_param1 }}"    
       - name: Set Matrix
         id: set-matrix
         run: |
           MATRIX="{\"include\":["
+          FIRST=true
           if [ "${{ github.event.inputs.enable_param1 }}" == "true" ]; then
-            MATRIX+="{\"param_name\":\"param1\"},"
+            if [ "$FIRST" == "false" ]; then
+              MATRIX+=","
+            fi
+            MATRIX+="{\"param_name\":\"param1\"}"
+            FIRST=false
           fi
           if [ "${{ github.event.inputs.enable_param2 }}" == "true" ]; then
-            MATRIX+="{\"param_name\":\"param2\"},"
+            if [ "$FIRST" == "false" ]; then
+              MATRIX+=","
+            fi
+            MATRIX+="{\"param_name\":\"param2\"}"
+            FIRST=false
           fi
           if [ "${{ github.event.inputs.enable_param3 }}" == "true" ]; then
-            MATRIX+="{\"param_name\":\"param3\"},"
+            if [ "$FIRST" == "false" ]; then
+              MATRIX+=","
+            fi
+            MATRIX+="{\"param_name\":\"param3\"}"
           fi
-          # Remove the last comma if it exists
-          MATRIX=$(echo $MATRIX | sed 's/,$//')
           MATRIX+="]}"
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
