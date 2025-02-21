@@ -26,11 +26,13 @@ jobs:
     strategy:
       matrix:
         default_tenant: [ 'AAA', 'BBB', 'CCC' ]  # List of supported workspaces
-    name: Deploy ${{ inputs.enable_param1 }} to ${{ matrix.default_tenant }}
+    name: Deploy ${{ inputs.enable_param1 }}${{ inputs.enable_param2 }}${{ inputs.enable_param3 }} to ${{ matrix.default_tenant }}
+    with:
+      tenant: ${{ matrix.default_tenant }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
       
       - name: Deploy
         run: |
-          echo "Deploying ${matrix.default_tenant}"
+          echo "Deploying ${inputs.tenant}"
