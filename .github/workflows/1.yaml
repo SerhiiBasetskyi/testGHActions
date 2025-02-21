@@ -20,21 +20,31 @@ on:
         default: false
 
 jobs:
-  dynamic-matrix:
+  deploy:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        param: ${{ fromJSON('[ 
-          { "name": "param1", "enabled": ' + (inputs.enable_param1 && 'true' || 'false') + ' }, 
-          { "name": "param2", "enabled": ' + (inputs.enable_param2 && 'true' || 'false') + ' }, 
-          { "name": "param3", "enabled": ' + (inputs.enable_param3 && 'true' || 'false') + ' } 
-        ]') }}
-        include: ${{ fromJSON('[ 
-          ' + (inputs.enable_param1 && '{"name": "param1", "enabled": true},' || '') + 
-          (inputs.enable_param2 && '{"name": "param2", "enabled": true},' || '') + 
-          (inputs.enable_param3 && '{"name": "param3", "enabled": true},' || '') + 
-          '{} ]') }}
-      fail-fast: false
+        param:
+          - name: param1
+            enabled: ${{ github.event.inputs.enable_param1 }}
+          - name: param2
+            enabled: ${{ github.event.inputs.enable_param2 }}
+          - name: param3
+            enabled: ${{ github.event.inputs.enable_param3 }}
+        # include используется для явного задания значения enabled для каждого параметра
+        include:
+          - name: param1
+            enabled: ${{ github.event.inputs.enable_param1 }}
+          - name: param2
+            enabled: ${{ github.event.inputs.enable_param2 }}
+          - name: param3
+            enabled: ${{ github.event.inputs.enable_param3 }}
+    # условие, которое проверяет, включен ли параметр, и если да, то выполняет джобу
+    if: matrix.enabled == 'true'
     steps:
-      - name: Echo parameter
-        run: echo "Running with parameter: ${{ matrix.param.name }}"
+      - name: Check out repository
+        uses: actions/checkout@v2
+      
+      - name: Deploy
+        run: |
+          echo "Deploying ${matrix.param.name}"
