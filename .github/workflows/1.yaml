@@ -17,32 +17,50 @@ on:
         default: false
 
 jobs:
+  set-parameters:
+    runs-on: ubuntu-latest
+    outputs:
+      param1_enabled: ${{ steps.set-params.outputs.param1_enabled }}
+      param2_enabled: ${{ steps.set-params.outputs.param2_enabled }}
+      param3_enabled: ${{ steps.set-params.outputs.param3_enabled }}
+    steps:
+      - name: Set Parameters
+        id: set-params
+        run: |
+          echo "param1_enabled=${{ github.event.inputs.enable_param1 }}" >> $GITHUB_OUTPUT
+          echo "param2_enabled=${{ github.event.inputs.enable_param2 }}" >> $GITHUB_OUTPUT
+          echo "param3_enabled=${{ github.event.inputs.enable_param3 }}" >> $GITHUB_OUTPUT
+
   deploy:
+    needs: set-parameters
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        param_name: ['param1', 'param2', 'param3']
-    name: Deploy with Parameter ${{ matrix.param_name }}
+        param_name: []
+      fail-fast: false
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
       
-      - name: Print Parameter Name and Status
-        id: print_parameter_status
+      - name: Set Matrix Parameters
+        id: set-matrix
         run: |
-          PARAM_NAME=${{ matrix.param_name }}
-          ENABLED=false
-          if [[ "${{ github.event.inputs.enable_param1 }}" == "true" && "$PARAM_NAME" == "param1" ]]; then
-            ENABLED=true
-          elif [[ "${{ github.event.inputs.enable_param2 }}" == "true" && "$PARAM_NAME" == "param2" ]]; then
-            ENABLED=true
-          elif [[ "${{ github.event.inputs.enable_param3 }}" == "true" && "$PARAM_NAME" == "param3" ]]; then
-            ENABLED=true
+          matrix_params=()
+          if [[ "${{ needs.set-parameters.outputs.param1_enabled }}" == "true" ]]; then
+            matrix_params+=("param1")
           fi
-          echo "Parameter: $PARAM_NAME, Enabled: $ENABLED"
-          echo "ENABLED=$ENABLED" >> $GITHUB_ENV
+          if [[ "${{ needs.set-parameters.outputs.param2_enabled }}" == "true" ]]; then
+            matrix_params+=("param2")
+          fi
+          if [[ "${{ needs.set-parameters.outputs.param3_enabled }}" == "true" ]]; then
+            matrix_params+=("param3")
+          fi
+          echo "matrix_params=$(IFS=,; echo "${matrix_params[*]}")" >> $GITHUB_ENV
       
       - name: Deploy
-        if: env.ENABLED == 'true'
         run: |
-          echo "Deploying with ${{ matrix.param_name }}"
+          for param in $(echo $matrix_params | tr "," "\n")
+          do
+            echo "Deploying with $param"
+            # Add your deployment script here
+          done
