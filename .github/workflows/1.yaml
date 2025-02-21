@@ -17,50 +17,26 @@ on:
         default: false
 
 jobs:
-  set-parameters:
-    runs-on: ubuntu-latest
-    outputs:
-      param1_enabled: ${{ steps.set-params.outputs.param1_enabled }}
-      param2_enabled: ${{ steps.set-params.outputs.param2_enabled }}
-      param3_enabled: ${{ steps.set-params.outputs.param3_enabled }}
-    steps:
-      - name: Set Parameters
-        id: set-params
-        run: |
-          echo "param1_enabled=${{ github.event.inputs.enable_param1 }}" >> $GITHUB_OUTPUT
-          echo "param2_enabled=${{ github.event.inputs.enable_param2 }}" >> $GITHUB_OUTPUT
-          echo "param3_enabled=${{ github.event.inputs.enable_param3 }}" >> $GITHUB_OUTPUT
-
   deploy:
-    needs: set-parameters
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        param_name: []
-      fail-fast: false
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
-      
-      - name: Set Matrix Parameters
-        id: set-matrix
+
+      - name: Deploy with param1
+        if: ${{ github.event.inputs.enable_param1 }}
         run: |
-          matrix_params=()
-          if [[ "${{ needs.set-parameters.outputs.param1_enabled }}" == "true" ]]; then
-            matrix_params+=("param1")
-          fi
-          if [[ "${{ needs.set-parameters.outputs.param2_enabled }}" == "true" ]]; then
-            matrix_params+=("param2")
-          fi
-          if [[ "${{ needs.set-parameters.outputs.param3_enabled }}" == "true" ]]; then
-            matrix_params+=("param3")
-          fi
-          echo "matrix_params=$(IFS=,; echo "${matrix_params[*]}")" >> $GITHUB_ENV
-      
-      - name: Deploy
+          echo "Deploying with param1"
+          # Add your deployment script for param1 here
+
+      - name: Deploy with param2
+        if: ${{ github.event.inputs.enable_param2 }}
         run: |
-          for param in $(echo $matrix_params | tr "," "\n")
-          do
-            echo "Deploying with $param"
-            # Add your deployment script here
-          done
+          echo "Deploying with param2"
+          # Add your deployment script for param2 here
+
+      - name: Deploy with param3
+        if: ${{ github.event.inputs.enable_param3 }}
+        run: |
+          echo "Deploying with param3"
+          # Add your deployment script for param3 here
