@@ -22,24 +22,28 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: always()
     strategy:
       matrix:
-        default_tenant: [ 'AAA', 'BBB', 'CCC' ]  # List of supported workspaces
-    name: Deploy ${{ inputs.enable_param1 }}${{ inputs.enable_param2 }}${{ inputs.enable_param3 }} to ${{ matrix.default_tenant }}
+        param_name: ['param1', 'param2', 'param3']
+    name: Deploy with Parameter ${{ matrix.param_name }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
       
-      - name: Deploy
+      - name: Print Parameter Name and Status
         run: |
-          echo "Deploying to ${{ matrix.default_tenant }}"
-          if [ "${{ github.event.inputs.enable_param1 }}" = "true" ]; then
-            echo "Param1 is enabled"
+          PARAM_NAME=${{ matrix.param_name }}
+          ENABLED=false
+          if [[ "${{ github.event.inputs.enable_param1 }}" == "true" && "$PARAM_NAME" == "param1" ]]; then
+            ENABLED=true
+          elif [[ "${{ github.event.inputs.enable_param2 }}" == "true" && "$PARAM_NAME" == "param2" ]]; then
+            ENABLED=true
+          elif [[ "${{ github.event.inputs.enable_param3 }}" == "true" && "$PARAM_NAME" == "param3" ]]; then
+            ENABLED=true
           fi
-          if [ "${{ github.event.inputs.enable_param2 }}" = "true" ]; then
-            echo "Param2 is enabled"
-          fi
-          if [ "${{ github.event.inputs.enable_param3 }}" = "true" ]; then
-            echo "Param3 is enabled"
-          fi
+          echo "Parameter: $PARAM_NAME, Enabled: $ENABLED"
+      
+      - name: Deploy
+        if: steps.Print Parameter Name and Status.outputs.ENABLED == 'true'
+        run: |
+          echo "Deploying with ${{ matrix.param_name }}"
