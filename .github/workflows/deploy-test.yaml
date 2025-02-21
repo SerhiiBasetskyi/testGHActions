@@ -23,6 +23,10 @@ on:
           - TOPDANMARK_HP
           - TRYG_HP
           - TRYGGHANSA_HP
+      params:
+        description: 'JSON array of parameters'
+        required: true
+        default: '["param1", "param2", "param3"]'
       scalepoint-repair-journey:
         description: 'Scalepoint Repair Journey'
         type: boolean
