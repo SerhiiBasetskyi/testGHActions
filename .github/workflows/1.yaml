@@ -22,24 +22,11 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: always()
     strategy:
       matrix:
-        param:
-          - name: param1
-            enabled: ${{ github.event.inputs.enable_param1 }}
-          - name: param2
-            enabled: ${{ github.event.inputs.enable_param2 }}
-          - name: param3
-            enabled: ${{ github.event.inputs.enable_param3 }}
-        # include используется для явного задания значения enabled для каждого параметра
-        include:
-          - name: param1
-            enabled: ${{ github.event.inputs.enable_param1 }}
-          - name: param2
-            enabled: ${{ github.event.inputs.enable_param2 }}
-          - name: param3
-            enabled: ${{ github.event.inputs.enable_param3 }}
-    # условие, которое проверяет, включен ли параметр, и если да, то выполняет джобу
+        default_tenant: [ 'AAA', 'BBB', 'CCC' ]  # List of supported workspaces
+    name: Deploy ${{ inputs.enable_param1 }} to ${{ matrix.default_tenant }}
     if: matrix.enabled == 'true'
     steps:
       - name: Check out repository
@@ -47,4 +34,4 @@ jobs:
       
       - name: Deploy
         run: |
-          echo "Deploying ${matrix.param.name}"
+          echo "Deploying ${matrix.default_tenant}"
