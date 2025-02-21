@@ -22,32 +22,24 @@ jobs:
     strategy:
       matrix:
         param_name: ['param1', 'param2', 'param3']
+        include:
+          - param_name: 'param1'
+            enabled: ${{ github.event.inputs.enable_param1 }}
+          - param_name: 'param2'
+            enabled: ${{ github.event.inputs.enable_param2 }}
+          - param_name: 'param3'
+            enabled: ${{ github.event.inputs.enable_param3 }}
     name: Deploy with Parameter ${{ matrix.param_name }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
-      
-      - name: Set Parameter Enablement
-        id: set_parameter_enablement
-        run: |
-          echo "enable_param1=${{ github.event.inputs.enable_param1 }}" >> $GITHUB_ENV
-          echo "enable_param2=${{ github.event.inputs.enable_param2 }}" >> $GITHUB_ENV
-          echo "enable_param3=${{ github.event.inputs.enable_param3 }}" >> $GITHUB_ENV
-      
-      - name: Deploy with param1
-        if: matrix.param_name == 'param1' && env.enable_param1 == 'true'
-        run: |
-          echo "Deploying with param1"
-          # Add your deployment script for param1 here
 
-      - name: Deploy with param2
-        if: matrix.param_name == 'param2' && env.enable_param2 == 'true'
-        run: |
-          echo "Deploying with param2"
-          # Add your deployment script for param2 here
+      - name: Skip Deployment if Parameter is Disabled
+        if: matrix.enabled == 'false'
+        run: echo "Skipping deployment for ${{ matrix.param_name }} because it is disabled."
 
-      - name: Deploy with param3
-        if: matrix.param_name == 'param3' && env.enable_param3 == 'true'
+      - name: Deploy with Parameter
+        if: matrix.enabled == 'true'
         run: |
-          echo "Deploying with param3"
-          # Add your deployment script for param3 here
+          echo "Deploying with ${{ matrix.param_name }}"
+          # Add your deployment script here for ${{ matrix.param_name }}
