@@ -6,15 +6,15 @@ on:
       enable_param1:
         type: boolean
         description: 'Enable param1AAAAAAAAA'
-        default: false
+        default: true
       enable_param2:
         type: boolean
         description: 'Enable param2'
-        default: false
+        default: true
       enable_param3:
         type: boolean
         description: 'Enable param3'
-        default: false
+        default: true
 
 jobs:
   set-matrix:
