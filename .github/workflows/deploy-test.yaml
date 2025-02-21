@@ -1,4 +1,4 @@
-name: Deploy Hub Property
+name: Deploy Test
 
 run-name: >
   Deploy ${{ inputs.package }} to ${{ inputs.environment }}
