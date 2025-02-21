@@ -5,7 +5,7 @@ on:
     inputs:
       enable_param1:
         type: boolean
-        description: 'Enable param1'
+        description: 'Enable param1AAAAAAAAA'
         default: false
       enable_param2:
         type: boolean
@@ -22,6 +22,8 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - name: Print input
+        run: echo "Environment is ${{ inputs.enable_param1 }}"    
       - name: Set Matrix
         id: set-matrix
         run: |
@@ -55,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
-    name: Deploy with Parameter ${{ matrix.param_name }}
+    name: Deploying ${{ matrix.param_name }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
