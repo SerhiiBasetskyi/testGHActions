@@ -22,16 +22,16 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Print input
-        run: echo "Environment is ${{ inputs.enable_param1 }}"    
       - name: Set Matrix
         id: set-matrix
         run: |
-          MATRIX=$(jq -cn '{include: []}' | jq '.include += [
-            {"param_name": "param1"} | select("${{ github.event.inputs.enable_param1 }}" == "true"),
-            {"param_name": "param2"} | select("${{ github.event.inputs.enable_param2 }}" == "true"),
-            {"param_name": "param3"} | select("${{ github.event.inputs.enable_param3 }}" == "true")
-          ]')
+          params=()
+          for param in param1 param2 param3; do
+            if [ "${{ github.event.inputs.enable_${param} }}" == "true" ]; then
+              params+=("{\"param_name\":\"$param\"}")
+            fi
+          done
+          MATRIX="{\"include\":[${params[*]}]}"
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
   deploy:
