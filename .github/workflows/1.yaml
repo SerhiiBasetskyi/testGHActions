@@ -21,17 +21,22 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
       - name: Set Matrix
         id: set-matrix
         run: |
-          params=()
-          for param in param1 param2 param3; do
-            if [ "${{ github.event.inputs.enable_${{ param }} }}" == "true" ]; then
-              params+=("{\"param_name\":\"$param\"}")
-            fi
-          done
-          MATRIX="{\"include\":[${params[*]}]}"
+          MATRIX="{\"include\":["
+          if [ "${{ github.event.inputs.enable_param1 }}" == "true" ]; then
+            MATRIX+="{\"param_name\":\"param1\"},"
+          fi
+          if [ "${{ github.event.inputs.enable_param2 }}" == "true" ]; then
+            MATRIX+="{\"param_name\":\"param2\"},"
+          fi
+          if [ "${{ github.event.inputs.enable_param3 }}" == "true" ]; then
+            MATRIX+="{\"param_name\":\"param3\"},"
+          fi
+          # Remove the last comma
+          MATRIX=${MATRIX%,}
+          MATRIX+="]}"
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
   deploy:
