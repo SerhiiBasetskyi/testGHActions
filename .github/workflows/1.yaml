@@ -27,7 +27,7 @@ jobs:
         run: |
           params=()
           for param in param1 param2 param3; do
-            if [ "${{ github.event.inputs.enable_${param} }}" == "true" ]; then
+            if [ "${{ github.event.inputs.enable_${{ param }} }}" == "true" ]; then
               params+=("{\"param_name\":\"$param\"}")
             fi
           done
