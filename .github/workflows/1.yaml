@@ -40,9 +40,9 @@ jobs:
             ENABLED=true
           fi
           echo "Parameter: $PARAM_NAME, Enabled: $ENABLED"
-          echo "::set-output name=ENABLED::$ENABLED"
+          echo "ENABLED=$ENABLED" >> $GITHUB_ENV
       
       - name: Deploy
-        if: steps.print_parameter_status.outputs.ENABLED == 'true'
+        if: env.ENABLED == 'true'
         run: |
           echo "Deploying with ${{ matrix.param_name }}"
