@@ -24,9 +24,17 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        param: ${{ fromJSON(format('[{"name": "param1", "enabled": {0}}, {"name": "param2", "enabled": {1}}, {"name": "param3", "enabled": {2}}]', inputs.enable_param1, inputs.enable_param2, inputs.enable_param3)) }}
+        param: ${{ fromJSON('[ 
+          { "name": "param1", "enabled": ' + (inputs.enable_param1 && 'true' || 'false') + ' }, 
+          { "name": "param2", "enabled": ' + (inputs.enable_param2 && 'true' || 'false') + ' }, 
+          { "name": "param3", "enabled": ' + (inputs.enable_param3 && 'true' || 'false') + ' } 
+        ]') }}
+        include: ${{ fromJSON('[ 
+          ' + (inputs.enable_param1 && '{"name": "param1", "enabled": true},' || '') + 
+          (inputs.enable_param2 && '{"name": "param2", "enabled": true},' || '') + 
+          (inputs.enable_param3 && '{"name": "param3", "enabled": true},' || '') + 
+          '{} ]') }}
       fail-fast: false
     steps:
       - name: Echo parameter
-        if: matrix.param.enabled == true
         run: echo "Running with parameter: ${{ matrix.param.name }}"
