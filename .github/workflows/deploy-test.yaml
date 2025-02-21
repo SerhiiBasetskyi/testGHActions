@@ -4,12 +4,25 @@ run-name: >
   Deploy ${{ inputs.package }} to ${{ inputs.environment }}
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       environment:
         description: 'Environment to deploy'
         required: true
-        type: string
+        type: choice
+        options:
+          - TEST_Tenant1
+          - CODAN_HP
+          - GJENSIDIGE_HP
+          - GF_HP
+          - KAB_HP
+          - LB_HP
+          - LOKAL_HP
+          - NEMFORSIKRING_HP
+          - POPERMO_HP
+          - TOPDANMARK_HP
+          - TRYG_HP
+          - TRYGGHANSA_HP
       scalepoint-repair-journey:
         description: 'Scalepoint Repair Journey'
         type: boolean
@@ -38,41 +51,6 @@ on:
         description: 'Hub Property Benchmarks'
         type: boolean
         default: true
-      package:
-        description: 'Package tag in the remote registry'
-        required: true
-        type: string
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy'
-        required: true
-        type: choice
-        options:
-          - TEST_Tenant1
-          - CODAN_HP
-          - GJENSIDIGE_HP
-          - GF_HP
-          - KAB_HP
-          - LB_HP
-          - LOKAL_HP
-          - NEMFORSIKRING_HP
-          - POPERMO_HP
-          - TOPDANMARK_HP
-          - TRYG_HP
-          - TRYGGHANSA_HP
-      hub-property-standard:
-        description: 'Hub Property Standard'
-        type: boolean
-        default: true
-      hub-property-benchmarks:
-        description: 'Hub Property Benchmarks'
-        type: boolean
-        default: true
-      package:
-        description: 'Package tag in the remote registry'
-        required: true
-        type: string
 
 jobs:
   deploy:
