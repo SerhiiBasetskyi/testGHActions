@@ -1,0 +1,33 @@
+name: Matrix with Checkbox Inputs
+
+on:
+  workflow_dispatch:
+    inputs:
+      enable_param1:
+        type: boolean
+        description: 'Enable param1'
+        default: false
+      enable_param2:
+        type: boolean
+        description: 'Enable param2'
+        default: false
+      enable_param3:
+        type: boolean
+        description: 'Enable param3'
+        default: false
+
+jobs:
+  dynamic-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        param: ${{ fromJSON('[
+          { "name": "param1", "enabled": ${inputs.enable_param1} },
+          { "name": "param2", "enabled": ${inputs.enable_param2} },
+          { "name": "param3", "enabled": ${inputs.enable_param3} }
+        ]') }}
+      fail-fast: false
+    steps:
+      - name: Echo parameter
+        if: matrix.param.enabled == 'true'
+        run: echo "Running with parameter: ${{ matrix.param.name }}"
