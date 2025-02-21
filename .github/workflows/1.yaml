@@ -34,8 +34,8 @@ jobs:
           if [ "${{ github.event.inputs.enable_param3 }}" == "true" ]; then
             MATRIX+="{\"param_name\":\"param3\"},"
           fi
-          # Remove the last comma
-          MATRIX=${MATRIX%,}
+          # Remove the last comma if it exists
+          MATRIX=$(echo $MATRIX | sed 's/,$//')
           MATRIX+="]}"
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
