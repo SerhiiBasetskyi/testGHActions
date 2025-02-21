@@ -17,29 +17,50 @@ on:
         default: false
 
 jobs:
+  set-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set Matrix
+        id: set-matrix
+        run: |
+          MATRIX="{\"include\":["
+          FIRST=true
+          if [ "${{ github.event.inputs.enable_param1 }}" == "true" ]; then
+            if [ "$FIRST" == "false" ]; then
+              MATRIX+=","
+            fi
+            MATRIX+="{\"param_name\":\"param1\"}"
+            FIRST=false
+          fi
+          if [ "${{ github.event.inputs.enable_param2 }}" == "true" ]; then
+            if [ "$FIRST" == "false" ]; then
+              MATRIX+=","
+            fi
+            MATRIX+="{\"param_name\":\"param2\"}"
+            FIRST=false
+          fi
+          if [ "${{ github.event.inputs.enable_param3 }}" == "true" ]; then
+            if [ "$FIRST" == "false" ]; then
+              MATRIX+=","
+            fi
+            MATRIX+="{\"param_name\":\"param3\"}"
+          fi
+          MATRIX+="]}"
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
   deploy:
+    needs: set-matrix
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        param_name: ['param1', 'param2', 'param3']
-        include:
-          - param_name: 'param1'
-            enabled: ${{ github.event.inputs.enable_param1 }}
-          - param_name: 'param2'
-            enabled: ${{ github.event.inputs.enable_param2 }}
-          - param_name: 'param3'
-            enabled: ${{ github.event.inputs.enable_param3 }}
+      matrix: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
     name: Deploy with Parameter ${{ matrix.param_name }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
-
-      - name: Skip Deployment if Parameter is Disabled
-        if: matrix.enabled == 'false'
-        run: echo "Skipping deployment for ${{ matrix.param_name }} because it is disabled."
-
+      
       - name: Deploy with Parameter
-        if: matrix.enabled == 'true'
         run: |
           echo "Deploying with ${{ matrix.param_name }}"
           # Add your deployment script here for ${{ matrix.param_name }}
