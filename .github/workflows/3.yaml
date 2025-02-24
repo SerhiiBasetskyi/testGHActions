@@ -1,0 +1,118 @@
+name: Deloy all HP workspaces
+
+on:
+  workflow_dispatch:
+    inputs:
+      enable_ALMBRAND_HP:
+        type: boolean
+        description: 'ALMBRAND_HP'
+        default: true
+      enable_CODAN_HP:
+        type: boolean
+        description: 'CODAN_HP'
+        default: true
+      enable_GF_HP:
+        type: boolean
+        description: 'GF_HP'
+        default: true
+      enable_GJENSIDIGE_HP:
+        type: boolean
+        description: 'GJENSIDIGE_HP'
+        default: true
+      enable_KAB_HP:
+        type: boolean
+        description: 'KAB_HP'
+        default: true
+      enable_LB_HP:
+        type: boolean
+        description: 'LB_HP'
+        default: true
+      enable_LOKAL_HP:
+        type: boolean
+        description: 'LOKAL_HP'
+        default: true
+      enable_NEMFORSIKRING_HP:
+        type: boolean
+        description: 'NEMFORSIKRING_HP'
+        default: true
+      enable_POPERMO_HP:
+        type: boolean
+        description: 'POPERMO_HP'
+        default: true
+      enable_TOPDANMARK_HP:
+        type: boolean
+        description: 'TOPDANMARK_HP'
+        default: true
+      enable_TRYGGHANSA_HP:
+        type: boolean
+        description: 'TRYGGHANSA_HP'
+        default: true
+      enable_TRYG_HP:
+        type: boolean
+        description: 'TRYG_HP'
+        default: true
+
+jobs:
+  set-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Print input
+        run: echo "Environment is ${{ inputs.enable_param1 }}"    
+      - name: Set Matrix
+        id: set-matrix
+        env:
+          ACTIVATE_ALMBRAND_HP: ${{ github.event.inputs.enable_ALMBRAND_HP }}
+          ACTIVATE_CODAN_HP: ${{ github.event.inputs.enable_CODAN_HP }}
+          ACTIVATE_GF_HP: ${{ github.event.inputs.enable_GF_HP }}
+          ACTIVATE_GJENSIDIGE_HP: ${{ github.event.inputs.enable_GJENSIDIGE_HP }}
+          ACTIVATE_KAB_HP: ${{ github.event.inputs.enable_KAB_HP }}
+          ACTIVATE_LB_HP: ${{ github.event.inputs.enable_LB_HP }}
+          ACTIVATE_LOKAL_HP: ${{ github.event.inputs.enable_LOKAL_HP }}
+          ACTIVATE_NEMFORSIKRING_HP: ${{ github.event.inputs.enable_NEMFORSIKRING_HP }}
+          ACTIVATE_POPERMO_HP: ${{ github.event.inputs.enable_POPERMO_HP }}
+          ACTIVATE_TOPDANMARK_HP: ${{ github.event.inputs.enable_TOPDANMARK_HP }}
+          ACTIVATE_TRYGGHANSA_HP: ${{ github.event.inputs.enable_TRYGGHANSA_HP }}
+          ACTIVATE_TRYG_HP: ${{ github.event.inputs.enable_TRYG_HP }}
+        run: |
+          import json
+          import os
+
+          matrix = {"include": []}
+
+          if os.getenv("ACTIVATE_ALMBRAND_HP") == "true": matrix["include"].append({"param_name": "ALMBRAND_HP"})
+          if os.getenv("ACTIVATE_CODAN_HP") == "true": matrix["include"].append({"param_name": "CODAN_HP"})
+          if os.getenv("ACTIVATE_GF_HP") == "true": matrix["include"].append({"param_name": "GF_HP"})
+          if os.getenv("ACTIVATE_GJENSIDIGE_HP") == "true": matrix["include"].append({"param_name": "GJENSIDIGE_HP"})
+          if os.getenv("ACTIVATE_KAB_HP") == "true": matrix["include"].append({"param_name": "KAB_HP"})
+          if os.getenv("ACTIVATE_LB_HP") == "true": matrix["include"].append({"param_name": "LB_HP"})
+          if os.getenv("ACTIVATE_LOKAL_HP") == "true": matrix["include"].append({"param_name": "LOKAL_HP"})
+          if os.getenv("ACTIVATE_NEMFORSIKRING_HP") == "true": matrix["include"].append({"param_name": "NEMFORSIKRING_HP"})
+          if os.getenv("ACTIVATE_POPERMO_HP") == "true": matrix["include"].append({"param_name": "POPERMO_HP"})
+          if os.getenv("ACTIVATE_TOPDANMARK_HP") == "true": matrix["include"].append({"param_name": "TOPDANMARK_HP"})
+          if os.getenv("ACTIVATE_TRYGGHANSA_HP") == "true": matrix["include"].append({"param_name": "TRYGGHANSA_HP"})
+          if os.getenv("ACTIVATE_TRYG_HP") == "true": matrix["include"].append({"param_name": "TRYG_HP"})
+
+          # Гарантируем, что матрица не пуста
+          if not matrix["include"]:
+              matrix["include"].append({"param_name": "default"})
+
+          with open(os.getenv("GITHUB_OUTPUT"), "a") as f:
+              f.write(f"matrix={json.dumps(matrix)}\n")
+        shell: python
+
+  deploy:
+    needs: set-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
+    name: Deploying ${{ matrix.param_name }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      
+      - name: Deploy with Parameter
+        run: |
+          echo "Deploying ${{ matrix.param_name }} workspace..."
+        
