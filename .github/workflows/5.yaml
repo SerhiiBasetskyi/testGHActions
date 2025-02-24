@@ -1,4 +1,4 @@
-name: Deloy all HP workspaces 2
+name: Deploy all HP workspaces
 
 on:
   workflow_dispatch:
@@ -23,20 +23,19 @@ on:
       workspaces:
         description: 'Array of workspaces'
         required: true
-        default: '{"ALMBRAND_HP", "CODAN_HP", "GF_HP", "GJENSIDIGE_HP"}
-
+        default: '["ALMBRAND_HP", "CODAN_HP", "GF_HP", "GJENSIDIGE_HP"]'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     strategy:
-      matrix: ${{ fromJson(inputs.workspaces) }}
-    name: Deploying ${{ matrix.param_name }}
+      matrix:
+        workspace: ${{ fromJson(inputs.workspaces) }}
+    name: Deploying ${{ matrix.workspace }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
       
       - name: Deploy with Parameter
         run: |
-          echo "Deploying ${{ matrix.param_name }} workspace..."
-        
+          echo "Deploying ${{ matrix.workspace }} workspace..."
