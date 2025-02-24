@@ -45,15 +45,15 @@ on:
         default: true
 
 jobs:
-  set-matrix:
+  get-workspaces:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      matrix: ${{ steps.get-workspaces.outputs.matrix }}
     steps:
       - name: Print input
         run: echo "Environment is ${{ inputs.enable_param1 }}"    
-      - name: Set Matrix
-        id: set-matrix
+      - name: Get list of workspaces
+        id: get-workspaces
         env:
           ACTIVATE_ALMBRAND_HP: ${{ github.event.inputs.enable_ALMBRAND_HP }}
           ACTIVATE_CODAN_HP: ${{ github.event.inputs.enable_CODAN_HP }}
@@ -91,10 +91,10 @@ jobs:
         shell: python
 
   deploy:
-    needs: set-matrix
+    needs: get-workspaces
     runs-on: ubuntu-latest
     strategy:
-      matrix: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.get-workspaces.outputs.matrix) }}
     name: Deploying ${{ matrix.param_name }}
     steps:
       - name: Check out repository
