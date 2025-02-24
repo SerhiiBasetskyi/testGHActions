@@ -43,14 +43,6 @@ on:
         type: boolean
         description: 'TOPDANMARK_HP'
         default: true
-      enable_TRYGGHANSA_HP:
-        type: boolean
-        description: 'TRYGGHANSA_HP'
-        default: true
-      enable_TRYG_HP:
-        type: boolean
-        description: 'TRYG_HP'
-        default: true
 
 jobs:
   set-matrix:
@@ -73,8 +65,6 @@ jobs:
           ACTIVATE_NEMFORSIKRING_HP: ${{ github.event.inputs.enable_NEMFORSIKRING_HP }}
           ACTIVATE_POPERMO_HP: ${{ github.event.inputs.enable_POPERMO_HP }}
           ACTIVATE_TOPDANMARK_HP: ${{ github.event.inputs.enable_TOPDANMARK_HP }}
-          ACTIVATE_TRYGGHANSA_HP: ${{ github.event.inputs.enable_TRYGGHANSA_HP }}
-          ACTIVATE_TRYG_HP: ${{ github.event.inputs.enable_TRYG_HP }}
         run: |
           import json
           import os
@@ -91,8 +81,6 @@ jobs:
           if os.getenv("ACTIVATE_NEMFORSIKRING_HP") == "true": matrix["include"].append({"param_name": "NEMFORSIKRING_HP"})
           if os.getenv("ACTIVATE_POPERMO_HP") == "true": matrix["include"].append({"param_name": "POPERMO_HP"})
           if os.getenv("ACTIVATE_TOPDANMARK_HP") == "true": matrix["include"].append({"param_name": "TOPDANMARK_HP"})
-          if os.getenv("ACTIVATE_TRYGGHANSA_HP") == "true": matrix["include"].append({"param_name": "TRYGGHANSA_HP"})
-          if os.getenv("ACTIVATE_TRYG_HP") == "true": matrix["include"].append({"param_name": "TRYG_HP"})
 
           # Гарантируем, что матрица не пуста
           if not matrix["include"]:
