@@ -1,0 +1,42 @@
+name: Deloy all HP workspaces 2
+
+on:
+  workflow_dispatch:
+    inputs:
+      report:
+        description: 'Environment to deploy'
+        required: true
+        type: choice
+        options:
+          - Report1
+          - Report2
+          - Report3
+          - Report4
+          - Report5
+          - Report6
+          - Report7
+          - Report8
+          - Report9
+          - Report10
+          - Report11
+          - Report12
+      workspaces:
+        description: 'Array of workspaces'
+        required: true
+        default: '{"ALMBRAND_HP", "CODAN_HP", "GF_HP", "GJENSIDIGE_HP"}
+
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(inputs.workspaces) }}
+    name: Deploying ${{ matrix.param_name }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      
+      - name: Deploy with Parameter
+        run: |
+          echo "Deploying ${{ matrix.param_name }} workspace..."
+        
