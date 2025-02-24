@@ -29,7 +29,10 @@ jobs:
         run: |
           MATRIX="{\"include\":["
           FIRST=true
-          if [ "${{ github.event.inputs.enable_param1 }}" == "true" ]; then if [ "$FIRST" == "false" ]; then MATRIX+="," fi
+          if [ "${{ github.event.inputs.enable_param1 }}" == "true" ]; then
+            if [ "$FIRST" == "false" ]; then
+              MATRIX+=","
+            fi
             MATRIX+="{\"param_name\":\"param1\"}"
             FIRST=false
           fi
