@@ -1,4 +1,4 @@
-name: Deloy all HP workspaces
+name: Deloy HP workspaces 1 part
 
 on:
   workflow_dispatch:
