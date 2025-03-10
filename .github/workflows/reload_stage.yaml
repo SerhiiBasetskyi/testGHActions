@@ -11,10 +11,6 @@ on:
         required: true
         default: '["Tenant1", "Tenant2", "Tenant3", "Tenant4", "Tenant5", "Tenant6"]'
         type: string
-  schedule:
-    - cron: '*/7 * * * *'
-    - cron: '*/20 * * * *'
-    - cron: '*/40 * * * *'
     #- cron: '0 0 1-7 * 6' # First Saturday of the month
     #- cron: '0 0 8-14 * 6' # Second Saturday of the month
     #- cron: '0 0 15-21 * 6' # Third Saturday of the month
