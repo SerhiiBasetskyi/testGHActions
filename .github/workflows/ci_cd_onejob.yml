@@ -1,4 +1,4 @@
-name: dbt checkpoint by jobs
+name: dbt checkpoint one job
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
       - name: Install dbt-checkpoint
         run: |
           python -m pip install --upgrade pip
-          pip install dbt-checkpoint
+          python -m pip install dbt-checkpoint
 
       - name: Check model has description
         run: dbt-checkpoint check-model-description --models-path dbt_test_project
