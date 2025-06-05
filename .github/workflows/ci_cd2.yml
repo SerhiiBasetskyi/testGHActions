@@ -1,0 +1,24 @@
+name: dbt Checkpoint Validation
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  dbt-checkpoint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        check:
+          - check-model-description
+          - check-model-column-description
+          - check-model-has-meta-key
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run dbt-checkpoint ${{ matrix.check }}
+        uses: dbt-labs/dbt-checkpoint-action@v1.1.1
+        with:
+          command: ${{ matrix.check }}
+          models-path: dbt_test_project

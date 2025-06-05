@@ -1,0 +1,21 @@
+dbt_test_project:
+  target: dev
+  outputs:
+    dev:
+      database: master
+      host: localhost
+      password: sbs2
+      port: 5432
+      threads: 1
+      type: sqlserver
+      user: sbs2
+    sbs:
+      type: sqlserver
+      driver: 'ODBC Driver 18 for SQL Server' # (The ODBC Driver installed on your system)
+      server: dev-bi-shr02.bicorp.spcph.local
+      port: 1433
+      database: DW_ALMBRAND_MLO
+      schema: dbo
+      encrypt: True
+      trust_cert: True
+      windows_login: True
