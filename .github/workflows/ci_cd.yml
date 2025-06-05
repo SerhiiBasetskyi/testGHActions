@@ -1,4 +1,4 @@
-name: dbt-checkpoint-validation
+name: dbt checkpoint by jobs
 
 on:
   push:

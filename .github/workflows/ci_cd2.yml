@@ -1,25 +1,37 @@
-name: dbt Checkpoint Validation
+name: dbt checkpoint by precommit
 
 on:
   push:
-    branches-ignore:
+  pull_request:
+    branches:
       - main
-  workflow_dispatch:
 
 jobs:
   dbt-checkpoint:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        check:
-          - check-model-description
-          - check-model-column-description
-          - check-model-has-meta-key
+    env:
+      ACCOUNT: ${{ vars.ACCOUNT }}
+      DATABASE: ${{ vars.DATABASE }}
+      SCHEMA: ${{ vars.SCHEMA }}
+      USER: ${{ vars.USER }}
+      PASSWORD: ${{ secrets.PASSWORD }}
+      ROLE: ${{ vars.ROLE }}
+      WAREHOUSE: ${{ vars.WAREHOUSE }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Run dbt-checkpoint ${{ matrix.check }}
-        uses: dbt-labs/dbt-checkpoint-action@v1.1.1
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      - id: Get file changes
+        uses: trilom/file-changes-action@v1.2.4
         with:
-          command: ${{ matrix.check }}
-          models-path: dbt_test_project
+          output: " "
+
+      - name: Run dbt checkpoint
+        uses: dbt-checkpoint/action@v0.1
+        with:
+          extra_args: --files ${{ steps.get_file_changes.outputs.files}}
+          dbt_version: 1.6.3
+          dbt_adapter: dbt-snowflake
